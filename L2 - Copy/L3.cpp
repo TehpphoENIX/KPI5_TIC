@@ -10,6 +10,7 @@
 #include <bitset>
 #include <array>
 #include <bitset>
+#include <queue>
 
 
 using std::cout;
@@ -31,6 +32,11 @@ struct TreeNode
 struct Leaf : TreeNode
 {
     Leaf() { type = leaf; }
+    Leaf(unsigned char name) 
+    { 
+        type = leaf; 
+        this->name = name;
+    }
     unsigned char name;
 };
 struct Branch : TreeNode
@@ -70,9 +76,38 @@ public:
 
         //creating final dictionary
         {
-            vector<std::pair<char, unsigned long>> array(table.begin(), table.end());
-            std::sort(array.begin(), array.end(), &comareFunc);
-            createDictionary(array, text.size(), &root);
+            struct HeapNode {
+                TreeNode* node;
+                unsigned long freq;
+            };
+
+            struct compare {
+
+                bool operator()(HeapNode* l, HeapNode* r)
+
+                {
+                    return (l->freq > r->freq);
+                }
+            };
+
+            std::priority_queue<HeapNode, std::queue<HeapNode>, compare> queue;
+            for(auto item : table)
+            {
+                queue.push({ new Leaf(item.first), item.second });
+            }
+
+            while (queue.size() > 1)
+            {
+               HeapNode first, second;
+                first = queue.top();
+                queue.pop();
+                second = queue.top();
+                queue.pop();
+                Branch* branch = new Branch();
+                branch->leftChild = first.node;
+                branch->rightChild = second.node;
+                queue.push({ branch, first.freq + second.freq });
+            }
         }
 
         unordered_map<unsigned char, string> symbolCodes = getDictionary();
